@@ -1,0 +1,13 @@
+[project]
+name = "paperpilot"
+version = "0.1.0"
+description = "Automatic paper collection and classification system for top conferences"
+requires-python = ">=3.8"
+dependencies = [
+    "requests>=2.28.0",
+    "beautifulsoup4>=4.11.0",
+    "lxml>=4.9.0",
+]
+
+[tool.uv]
+# uv-specific configuration

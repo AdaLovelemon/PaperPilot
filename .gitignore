@@ -1,0 +1,53 @@
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Database files
+*.db
+*.db-journal
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test outputs
+test_output/
+coverage.xml
+htmlcov/
+.coverage
+
+# Archive directory
+archive/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Project specific
+papers.db
+paper_collection_*.json
+
+# Specific results
+Papers_By_Hot_Topic/
+papers.db
+papers.json

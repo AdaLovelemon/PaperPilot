@@ -1,107 +1,51 @@
 {
-  "1_医疗多模态模型_(Medical_Multimodal_VLM)": [
-    "medical multimodal", "medical vision language model", "MedCLIP",
-    "biomedical vision language", "clinical multimodal model",
-    "radiology vision language", "medical image text",
-    "X-ray report", "CT report", "MRI report",
-    "medical foundation model", "healthcare AI model"
-  ],
-
-  "2_医疗大模型_(Medical_MLLM)": [
-    "medical large language model", "medical multimodal large language model",
-    "LLaVA-Med", "Med-PaLM", "clinical LLM",
-    "instruction tuning medical", "visual instruction tuning",
-    "medical chat model", "doctor AI assistant"
-  ],
-
-  "3_多模态对齐_(Multimodal_Alignment)": [
-    "vision language alignment", "image text alignment",
-    "cross modal alignment", "contrastive learning multimodal",
-    "CLIP", "BLIP", "ALIGN",
-    "embedding alignment", "multimodal representation learning"
-  ],
-
-  "4_细粒度与多粒度对齐_(FineGrained_MG_Alignment)": [
-    "fine-grained alignment", "multi-granularity alignment",
-    "hierarchical alignment", "token-level alignment",
-    "region-text alignment", "phrase grounding",
-    "dense alignment", "local-global alignment"
-  ],
-
-  "5_视觉定位与Grounding_(Visual_Grounding)": [
-    "visual grounding", "phrase grounding",
-    "grounded vision language", "text-guided detection",
-    "grounding dino", "glip",
-    "open vocabulary detection", "region localization",
-    "text to region alignment"
-  ],
-
-  "6_弱监督与无监督定位_(WeaklySupervised_Grounding)": [
-    "weakly supervised grounding", "unsupervised grounding",
-    "weakly supervised detection", "attention localization",
-    "self supervised localization", "pseudo label region",
-    "no bounding box grounding"
-  ],
-
-  "7_多模态推理_(Multimodal_Reasoning)": [
-    "multimodal reasoning", "visual reasoning",
-    "vision language reasoning", "logical reasoning multimodal",
-    "compositional reasoning", "step by step reasoning",
-    "image reasoning", "diagram reasoning"
-  ],
-
-  "8_Chain_of_Thought_(CoT)": [
-    "chain of thought", "multimodal chain of thought",
-    "visual chain of thought", "step by step reasoning",
-    "reasoning prompting", "cot prompting",
-    "structured reasoning", "explainable reasoning"
-  ],
-
-  "9_Grounded_Reasoning_(Grounded_CoT)": [
-    "grounded reasoning", "grounded chain of thought",
-    "visual evidence reasoning", "region grounded reasoning",
-    "multimodal explanation grounding",
-    "faithful reasoning multimodal",
-    "evidence based reasoning AI"
-  ],
-
-  "10_医学推理_(Medical_Reasoning)": [
-    "clinical reasoning AI", "medical reasoning model",
-    "diagnosis reasoning", "radiology reasoning",
-    "medical decision making AI",
-    "evidence based diagnosis model"
-  ],
-
-  "11_视觉分割与区域理解_(Segmentation_Region)": [
-    "medical segmentation", "lesion segmentation",
-    "segment anything", "SAM medical",
-    "semantic segmentation medical",
-    "instance segmentation medical",
-    "tumor segmentation", "organ segmentation"
-  ],
-
-  "12_多模态数据集_(Multimodal_Datasets)": [
-    "medical multimodal dataset", "radiology dataset",
-    "image text dataset medical", "MIMIC-CXR",
-    "OpenI dataset", "medical report dataset",
-    "VQA-RAD", "PathVQA"
-  ],
-
-  "13_多模态评测与Benchmark_(Benchmark)": [
-    "medical multimodal benchmark", "vision language benchmark",
-    "medical VQA benchmark", "evaluation multimodal model",
-    "clinical AI evaluation", "robustness medical AI"
-  ],
-
-  "14_多模态生成_(Multimodal_Generation)": [
-    "medical image generation", "text to medical image",
-    "diffusion medical imaging", "report generation",
-    "image caption medical", "radiology report generation"
-  ],
-
-  "15_跨模态检索_(CrossModal_Retrieval)": [
-    "image text retrieval medical", "cross modal retrieval",
-    "medical retrieval system", "clinical search AI",
-    "semantic search medical image", "multimodal retrieval"
-  ]
+    "01_多模态大模型与基础模型_(Multimodal_LLM_VLM_Foundation)": [
+        "\\bllm\\b", "\\bvlm\\b", "\\blm\\b", "large language model", "vision-language model", 
+        "foundation model", "large model", "large vision model", "vision foundation model"
+    ],
+    "02_具身智能与机器人_(Embodied_AI_Robotics)": [
+        "embodied", "robot", "navigation", "manipulation", "locomotion", "grasping",
+        "sim2real", "autonomous agent", "reinforcement learning for robotics"
+    ],
+    "03_扩散模型与生成式AI_(Diffusion_AIGC)": [
+        "diffusion", "generative model", "text-to-image", "text-to-video", "image generation", 
+        "video generation", "gan", "generative adversarial"
+    ],
+    "04_3D视觉与神经渲染_(3D_NeRF_3DGS)": [
+        "nerf", "neural radiance field", "gaussian splatting", "3d generation", "novel view synthesis",
+        "point cloud", "3d reconstruction", "3dgs", "3d object"
+    ],
+    "05_视觉分割_(Visual_Segmentation)": [
+        "segmentation", "segment anything", "sam", "panoptic", "semantic segmentation", 
+        "instance segmentation", "image matting"
+    ],
+    "06_自动驾驶_(Autonomous_Driving)": [
+        "autonomous driving", "autonomous vehicles", "trajectory prediction", "bird's-eye-view", 
+        "\\bbev\\b", "occupancy prediction", "lane detection", "driving"
+    ],
+    "07_自监督与无监督学习_(Self_Supervised_Learning)": [
+        "self-supervised", "ssl", "contrastive learning", "masked autoencoder", "\\bmae\\b",
+        "unsupervised", "representation learning"
+    ],
+    "08_强化学习_(Reinforcement_Learning)": [
+        "reinforcement learning", "\\bRL\\b", "reward model", "policy optimization", "ppo", "rlhf"
+    ],
+    "09_目标检测与跟踪_(Object_Detection_Tracking)": [
+        "object detection", "object tracking", "visual tracking", "mot", "bounding box"
+    ],
+    "10_低级视觉与图像处理_(Low_Level_Vision)": [
+        "super-resolution", "denoising", "deblurring", "image restoration", "image enhancement",
+        "low-light", "inpainting"
+    ],
+    "11_智能体框架_(Agent_Frameworks)": [
+        "agent architecture",
+        "multi-agent system",
+        "distributed agents",
+        "cooperative agents",
+        "autonomous agent framework",
+        "agent communication",
+        "planning module",
+        "reasoning engine",
+        "goal-oriented agent"
+    ]
 }

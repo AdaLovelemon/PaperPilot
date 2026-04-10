@@ -7,6 +7,7 @@ import hashlib
 
 logger = logging.getLogger(__name__)
 
+
 class PaperStorage:
     """Storage for classified papers using SQLite database."""
 
@@ -47,8 +48,12 @@ class PaperStorage:
 
         # Create indexes for efficient queries
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_arxiv_id ON papers (arxiv_id)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_conference_year ON papers (conference, year)")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_primary_category ON papers (primary_category)")
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_conference_year ON papers (conference, year)"
+        )
+        cursor.execute(
+            "CREATE INDEX IF NOT EXISTS idx_primary_category ON papers (primary_category)"
+        )
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_topics ON papers (topics)")
 
         # Paper categories junction table for many-to-many relationship
@@ -79,26 +84,27 @@ class PaperStorage:
             cursor = conn.cursor()
 
             # Convert lists to JSON strings
-            categories_json = json.dumps(paper.get('categories', []))
-            keywords_json = json.dumps(paper.get('keywords', []))
-            topics_json = json.dumps(paper.get('topics', []))
-            authors_json = json.dumps(paper.get('authors', []))
-            links_json = json.dumps(paper.get('links', {}))
+            categories_json = json.dumps(paper.get("categories", []))
+            keywords_json = json.dumps(paper.get("keywords", []))
+            topics_json = json.dumps(paper.get("topics", []))
+            authors_json = json.dumps(paper.get("authors", []))
+            links_json = json.dumps(paper.get("links", {}))
 
             # Check if paper already exists
-            arxiv_id = paper.get('arxiv_id')
-            title = paper.get('title')
-            
+            arxiv_id = paper.get("arxiv_id")
+            title = paper.get("title")
+
             if arxiv_id:
                 cursor.execute("SELECT id FROM papers WHERE arxiv_id = ?", (arxiv_id,))
             else:
                 cursor.execute("SELECT id FROM papers WHERE title = ?", (title,))
-                
+
             existing = cursor.fetchone()
 
             if existing:
                 # Update existing paper
-                cursor.execute("""
+                cursor.execute(
+                    """
                     UPDATE papers SET
                         title = ?, abstract = ?, primary_category = ?, categories = ?,
                         keywords = ?, topics = ?, authors = ?, conference = ?, year = ?,
@@ -106,58 +112,90 @@ class PaperStorage:
                         published_date = ?, updated_date = ?,
                         source = ?, updated_at = CURRENT_TIMESTAMP
                     WHERE arxiv_id = ?
-                """, (
-                    paper.get('title'), paper.get('abstract'), paper.get('primary_category'),
-                    categories_json, keywords_json, topics_json, authors_json,
-                    paper.get('conference'), paper.get('year'),
-                    paper.get('url'), paper.get('pdf_url'), paper.get('supplement_url'),
-                    links_json,
-                    paper.get('published_date'), paper.get('updated_date'),
-                    paper.get('source'), paper.get('arxiv_id')
-                ))
+                """,
+                    (
+                        paper.get("title"),
+                        paper.get("abstract"),
+                        paper.get("primary_category"),
+                        categories_json,
+                        keywords_json,
+                        topics_json,
+                        authors_json,
+                        paper.get("conference"),
+                        paper.get("year"),
+                        paper.get("url"),
+                        paper.get("pdf_url"),
+                        paper.get("supplement_url"),
+                        links_json,
+                        paper.get("published_date"),
+                        paper.get("updated_date"),
+                        paper.get("source"),
+                        paper.get("arxiv_id"),
+                    ),
+                )
                 paper_id = existing[0]
             else:
                 # Insert new paper
-                cursor.execute("""
+                cursor.execute(
+                    """
                     INSERT INTO papers (
                         arxiv_id, title, abstract, primary_category, categories,
                         keywords, topics, authors, conference, year,
                         url, pdf_url, supplement_url, links,
                         published_date, updated_date, source
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    paper.get('arxiv_id'), paper.get('title'), paper.get('abstract'),
-                    paper.get('primary_category'), categories_json, keywords_json,
-                    topics_json, authors_json, paper.get('conference'), paper.get('year'),
-                    paper.get('url'), paper.get('pdf_url'), paper.get('supplement_url'),
-                    links_json,
-                    paper.get('published_date'), paper.get('updated_date'), paper.get('source')
-                ))
+                """,
+                    (
+                        paper.get("arxiv_id"),
+                        paper.get("title"),
+                        paper.get("abstract"),
+                        paper.get("primary_category"),
+                        categories_json,
+                        keywords_json,
+                        topics_json,
+                        authors_json,
+                        paper.get("conference"),
+                        paper.get("year"),
+                        paper.get("url"),
+                        paper.get("pdf_url"),
+                        paper.get("supplement_url"),
+                        links_json,
+                        paper.get("published_date"),
+                        paper.get("updated_date"),
+                        paper.get("source"),
+                    ),
+                )
                 paper_id = cursor.lastrowid
 
             # Update categories junction table
-            cursor.execute("DELETE FROM paper_categories WHERE paper_id = ?", (paper_id,))
+            cursor.execute(
+                "DELETE FROM paper_categories WHERE paper_id = ?", (paper_id,)
+            )
 
             # Insert primary category
-            primary_category = paper.get('primary_category')
+            primary_category = paper.get("primary_category")
             if primary_category:
                 cursor.execute(
                     "INSERT INTO paper_categories (paper_id, category, is_primary) VALUES (?, ?, ?)",
-                    (paper_id, primary_category, True)
+                    (paper_id, primary_category, True),
                 )
 
             # Insert secondary categories
-            for category in paper.get('categories', []):
-                cursor.execute(
-                    "INSERT INTO paper_categories (paper_id, category, is_primary) VALUES (?, ?, ?)",
-                    (paper_id, category, False)
-                )
+            for category in paper.get("categories", []):
+                if category != primary_category:
+                    cursor.execute(
+                        "INSERT INTO paper_categories (paper_id, category, is_primary) VALUES (?, ?, ?)",
+                        (paper_id, category, False),
+                    )
 
             # Update full-text search index
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT OR REPLACE INTO papers_fts (rowid, title, abstract, keywords)
                 VALUES (?, ?, ?, ?)
-            """, (paper_id, paper.get('title'), paper.get('abstract'), keywords_json))
+            """,
+                (paper_id, paper.get("title"), paper.get("abstract"), keywords_json),
+            )
 
             conn.commit()
             conn.close()
@@ -188,7 +226,7 @@ class PaperStorage:
             if row:
                 paper = dict(row)
                 # Parse JSON fields
-                for field in ['categories', 'keywords', 'topics', 'authors']:
+                for field in ["categories", "keywords", "topics", "authors"]:
                     if paper.get(field):
                         paper[field] = json.loads(paper[field])
                 return paper
@@ -207,19 +245,22 @@ class PaperStorage:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT p.* FROM papers p
                 JOIN papers_fts f ON p.id = f.rowid
                 WHERE papers_fts MATCH ?
                 ORDER BY rank
                 LIMIT ?
-            """, (query, limit))
+            """,
+                (query, limit),
+            )
 
             papers = []
             for row in cursor.fetchall():
                 paper = dict(row)
                 # Parse JSON fields
-                for field in ['categories', 'keywords', 'topics', 'authors']:
+                for field in ["categories", "keywords", "topics", "authors"]:
                     if paper.get(field):
                         paper[field] = json.loads(paper[field])
                 papers.append(paper)
@@ -232,7 +273,9 @@ class PaperStorage:
         finally:
             conn.close()
 
-    def get_papers_by_conference(self, conference: str, year: Optional[int] = None) -> List[Dict[str, Any]]:
+    def get_papers_by_conference(
+        self, conference: str, year: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
         """Get all papers from a specific conference (optionally for a specific year)."""
         try:
             conn = sqlite3.connect(self.db_path)
@@ -242,19 +285,19 @@ class PaperStorage:
             if year:
                 cursor.execute(
                     "SELECT * FROM papers WHERE conference = ? AND year = ? ORDER BY title",
-                    (conference, year)
+                    (conference, year),
                 )
             else:
                 cursor.execute(
                     "SELECT * FROM papers WHERE conference = ? ORDER BY year DESC, title",
-                    (conference,)
+                    (conference,),
                 )
 
             papers = []
             for row in cursor.fetchall():
                 paper = dict(row)
                 # Parse JSON fields
-                for field in ['categories', 'keywords', 'topics', 'authors']:
+                for field in ["categories", "keywords", "topics", "authors"]:
                     if paper.get(field):
                         paper[field] = json.loads(paper[field])
                 papers.append(paper)
@@ -274,18 +317,21 @@ class PaperStorage:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
 
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT p.* FROM papers p
                 JOIN paper_categories pc ON p.id = pc.paper_id
                 WHERE pc.category = ?
                 ORDER BY p.year DESC, p.conference, p.title
-            """, (category,))
+            """,
+                (category,),
+            )
 
             papers = []
             for row in cursor.fetchall():
                 paper = dict(row)
                 # Parse JSON fields
-                for field in ['categories', 'keywords', 'topics', 'authors']:
+                for field in ["categories", "keywords", "topics", "authors"]:
                     if paper.get(field):
                         paper[field] = json.loads(paper[field])
                 papers.append(paper)
@@ -306,10 +352,13 @@ class PaperStorage:
             cursor = conn.cursor()
 
             if conferences:
-                placeholders = ','.join(['?'] * len(conferences))
-                cursor.execute(f"""
+                placeholders = ",".join(["?"] * len(conferences))
+                cursor.execute(
+                    f"""
                     SELECT * FROM papers WHERE conference IN ({placeholders}) ORDER BY conference, year, title
-                """, conferences)
+                """,
+                    conferences,
+                )
             else:
                 cursor.execute("SELECT * FROM papers ORDER BY conference, year, title")
 
@@ -317,18 +366,63 @@ class PaperStorage:
             for row in cursor.fetchall():
                 paper = dict(row)
                 # Parse JSON fields
-                for field in ['categories', 'keywords', 'topics', 'authors']:
+                for field in ["categories", "keywords", "topics", "authors"]:
                     if paper.get(field):
                         paper[field] = json.loads(paper[field])
                 papers.append(paper)
 
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(papers, f, indent=2, ensure_ascii=False)
 
             logger.info(f"Exported {len(papers)} papers to {output_path}")
 
         except Exception as e:
             logger.error(f"Failed to export to JSON: {e}")
+            raise
+        finally:
+            conn.close()
+
+    def export_to_csv(self, output_path: str, conferences: Optional[List[str]] = None):
+        """Export papers to CSV file."""
+        import csv
+
+        try:
+            conn = sqlite3.connect(self.db_path)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+
+            if conferences:
+                placeholders = ",".join(["?"] * len(conferences))
+                cursor.execute(
+                    f"""
+                    SELECT * FROM papers WHERE conference IN ({placeholders}) ORDER BY conference, year, title
+                """,
+                    conferences,
+                )
+            else:
+                cursor.execute("SELECT * FROM papers ORDER BY conference, year, title")
+
+            rows = cursor.fetchall()
+            if not rows:
+                logger.info(f"No papers found to export to CSV.")
+                return 0
+
+            # Get column names
+            fieldnames = rows[0].keys()
+
+            with open(output_path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=fieldnames)
+                writer.writeheader()
+                for row in rows:
+                    paper = dict(row)
+                    # Convert JSON fields back to string representations or keep as is since they are strings in db
+                    writer.writerow(paper)
+
+            logger.info(f"Exported {len(rows)} papers to {output_path}")
+            return len(rows)
+
+        except Exception as e:
+            logger.error(f"Failed to export to CSV: {e}")
             raise
         finally:
             conn.close()

@@ -1,0 +1,50 @@
+{
+    "01_多模态大模型与基础模型_(Multimodal_LLM_VLM_Foundation)": [
+        "\\bllm\\b", "\\bvlm\\b", "\\blm\\b", "large language model", "vision-language model", 
+        "foundation model", "large model", "large vision model", "vision foundation model"
+    ],
+    "02_具身智能与机器人_(Embodied_AI_Robotics)": [
+        "embodied", "robot", "navigation", "manipulation", "locomotion", "grasping",
+        "sim2real", "autonomous agent", "reinforcement learning for robotics"
+    ],
+    "03_扩散模型与生成式AI_(Diffusion_AIGC)": [
+        "diffusion", "generative model", "text-to-image", "text-to-video", "image generation", 
+        "video generation", "gan", "generative adversarial"
+    ],
+    "04_3D视觉与神经渲染_(3D_NeRF_3DGS)": [
+        "nerf", "neural radiance field", "gaussian splatting", "3d generation", "novel view synthesis",
+        "point cloud", "3d reconstruction", "3dgs", "3d object"
+    ],
+    "05_视觉分割_(Visual_Segmentation)": [
+        "segmentation", "segment anything", "sam", "panoptic", "semantic segmentation", 
+        "instance segmentation", "image matting"
+    ],
+    "06_自动驾驶_(Autonomous_Driving)": [
+        "autonomous driving", "autonomous vehicles", "trajectory prediction", "bird's-eye-view", 
+        "\\bbev\\b", "occupancy prediction", "lane detection", "driving"
+    ],
+    "07_自监督与无监督学习_(Self_Supervised_Learning)": [
+        "self-supervised", "ssl", "contrastive learning", "masked autoencoder", "\\bmae\\b",
+        "unsupervised", "representation learning"
+    ],
+    "08_强化学习_(Reinforcement_Learning)": [
+        "reinforcement learning", "\\bRL\\b", "reward model", "policy optimization", "ppo", "rlhf"
+    ],
+    "09_目标检测与跟踪_(Object_Detection_Tracking)": [
+        "object detection", "object tracking", "visual tracking", "mot", "bounding box"
+    ],
+    "10_低级视觉与图像处理_(Low_Level_Vision)": [
+        "super-resolution", "denoising", "deblurring", "image restoration", "image enhancement",
+        "low-light", "inpainting"
+    ],
+    "11_智能体框架_(Agent_Frameworks)": [
+        "agent architecture",
+        "multi-agent system",
+        "distributed agents",
+        "cooperative agents",
+        "autonomous agent framework",
+        "agent communication",
+        "planning module",
+        "reasoning engine",
+        "goal-oriented agent"
+    ],

@@ -182,10 +182,11 @@ class PaperStorage:
 
             # Insert secondary categories
             for category in paper.get("categories", []):
-                cursor.execute(
-                    "INSERT INTO paper_categories (paper_id, category, is_primary) VALUES (?, ?, ?)",
-                    (paper_id, category, False),
-                )
+                if category != primary_category:
+                    cursor.execute(
+                        "INSERT INTO paper_categories (paper_id, category, is_primary) VALUES (?, ?, ?)",
+                        (paper_id, category, False),
+                    )
 
             # Update full-text search index
             cursor.execute(

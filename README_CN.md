@@ -107,20 +107,25 @@ uv run python main.py categorize --input papers.json --fill-abstracts --verbose
 
 ### 阶段三：导出为 CSV / BibTeX (`export`)
 
-将数据库中的论文导出为 CSV 格式，并可选择将其转换为支持导入 Zotero 的 BibTeX 文件。
+将数据库中的论文导出为 CSV 格式，并可选择将其转换为支持导入 Zotero 的 BibTeX 文件。同时也支持对分类后的 JSON 文件夹进行批量转换。
 
 ```bash
-# 导出所有论文为 CSV 并转换为 BibTeX
+# 模式 A: 导出所有论文为 CSV 并转换为 BibTeX
 uv run python main.py export --output-csv all_papers.csv --output-bib all_papers.bib --include-abstract --dedupe
 
-# 仅导出指定会议的论文
+# 模式 B: 仅导出指定会议的论文
 uv run python main.py export --conference CVPR,ICCV --output-bib cv_papers.bib
+
+# 模式 C: 针对分类文件夹进行批量 BibTeX 转换 (推荐用于 Zotero 分类导入)
+uv run python main.py export --input-dir Papers_By_Hot_Topic --output-dir MyScholarBibs --include-abstract --dedupe
 ```
 
 **关键参数说明：**
 - `--output-csv`: 输出的 CSV 文件路径。
 - `--output-bib`: 输出的 BibTeX 文件路径。
-- `--conference`: 逗号分隔的会议名称，用于过滤导出结果。
+- `--input-dir`: **(批量模式)** 指定包含 JSON 论文列表的目录（如 `categorize` 生成的目录）。
+- `--output-dir`: **(批量模式)** 指定生成的批量 BibTeX 文件存放目录。
+- `--conference`: 逗号分隔的会议名称，用于从数据库过滤。
 - `--dedupe`: 对 BibTeX 条目去重（根据 arXiv ID 或标题+年份）。
 - `--include-abstract`: 在 BibTeX 的 note 字段中包含摘要。
 - `--include-keywords`: 在 BibTeX 的 note 字段中包含关键词。

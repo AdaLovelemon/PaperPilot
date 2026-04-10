@@ -51,6 +51,8 @@ paper_collection_*.json
 Papers_By_Hot_Topic/
 papers.db
 papers.json
+MySpecialBibs/
+MyScholarBibs/
 
 # Exported data
 *.csv

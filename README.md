@@ -89,20 +89,25 @@ A directory `Papers_By_Hot_Topic/` will be created containing partitioned JSON f
 
 ### Phase 3: Export to CSV / BibTeX (`export`)
 
-Export papers from the database to CSV format and optionally convert them to a Zotero-importable BibTeX file.
+Export papers from the database to CSV format and optionally convert them to a Zotero-importable BibTeX file. It also supports batch conversion of categorized JSON files.
 
 ```bash
-# Export all papers to CSV and convert to BibTeX
+# Mode A: Export all papers to CSV and convert to BibTeX
 uv run python main.py export --output-csv all_papers.csv --output-bib all_papers.bib --include-abstract --dedupe
 
-# Export only specific conferences
+# Mode B: Export only specific conferences
 uv run python main.py export --conference CVPR,ICCV --output-bib cv_papers.bib
+
+# Mode C: Batch convert categorized JSONs to BibTeX (Recommended for Zotero Collections)
+uv run python main.py export --input-dir Papers_By_Hot_Topic --output-dir MyScholarBibs --include-abstract --dedupe
 ```
 
 **Key Arguments:**
 - `--output-csv`: Output CSV file path.
 - `--output-bib`: Output BibTeX file path.
-- `--conference`: Comma-separated list of conferences to filter by.
+- `--input-dir`: **(Batch Mode)** Directory containing JSON paper lists (e.g. `categorize` output).
+- `--output-dir`: **(Batch Mode)** Target directory for generated BibTeX files.
+- `--conference`: Comma-separated list of conferences to filter from database.
 - `--dedupe`: Deduplicate BibTeX entries by arXiv ID or title+year.
 - `--include-abstract`: Include abstract in the BibTeX note field.
 - `--include-keywords`: Include keywords in the BibTeX note field.

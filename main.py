@@ -17,6 +17,11 @@ from core.categorizer import TopicCategorizer
 from utils.config_loader import ConfigLoader
 from collectors.factory import CollectorFactory
 import datetime
+from pathlib import Path
+
+import tempfile
+import os
+from utils.csv_to_bib import convert_csv_to_bib
 
 # Fix encoding for Windows console
 if sys.platform == "win32":
@@ -229,18 +234,83 @@ def handle_export(args):
     setup_logging(args.verbose)
 
     from storage.paper_storage import PaperStorage
-
     storage = PaperStorage(db_path=args.db_path)
 
+    # Mode 1: Batch Export from JSON directory (Papers_By_Hot_Topic)
+    if args.input_dir:
+        input_dir = Path(args.input_dir)
+        if not input_dir.exists() or not input_dir.is_dir():
+            logger.error(f"Input directory does not exist: {args.input_dir}")
+            return 1
+
+        output_dir = Path(args.output_dir or "Exported_Bib")
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        json_files = list(input_dir.glob("*.json"))
+        if not json_files:
+            logger.warning(f"No JSON files found in {args.input_dir}")
+            return 0
+
+        logger.info(f"Batch processing {len(json_files)} files from {input_dir}...")
+        
+        for json_file in json_files:
+            # Create a temporary CSV for this specific JSON
+            with tempfile.NamedTemporaryFile(suffix=".csv", delete=False, mode='w', encoding='utf-8') as tf:
+                temp_csv = tf.name
+            
+            try:
+                # Load JSON and convert to temp CSV
+                with open(json_file, 'r', encoding='utf-8') as f:
+                    papers = json.load(f)
+                
+                if not papers:
+                    continue
+                
+                import csv
+                # Get all possible headers from papers
+                headers = set()
+                for p in papers:
+                    headers.update(p.keys())
+                
+                with open(temp_csv, 'w', newline='', encoding='utf-8') as f:
+                    writer = csv.DictWriter(f, fieldnames=sorted(list(headers)))
+                    writer.writeheader()
+                    for p in papers:
+                        # Handle JSON fields that might be lists
+                        row = {}
+                        for k, v in p.items():
+                            if isinstance(v, (list, dict)):
+                                row[k] = json.dumps(v, ensure_ascii=False)
+                            else:
+                                row[k] = v
+                        writer.writerow(row)
+
+                # Convert to Bib
+                bib_filename = json_file.stem + ".bib"
+                bib_path = output_dir / bib_filename
+                
+                convert_csv_to_bib(
+                    input_csv=temp_csv,
+                    output_bib=str(bib_path),
+                    dedupe=args.dedupe,
+                    include_abstract=args.include_abstract,
+                    include_keywords=args.include_keywords,
+                    include_topics=args.include_topics,
+                    include_arxiv_id=args.include_arxiv_id,
+                )
+            finally:
+                if os.path.exists(temp_csv):
+                    os.remove(temp_csv)
+        
+        logger.info(f"Batch export completed. Files saved to {output_dir}")
+        return 0
+
+    # Mode 2: Standard Export from Database
     conferences = (
         [c.strip() for c in args.conference.split(",")] if args.conference else None
     )
 
     # Generate temporary CSV path if user only asked for bib
-    import tempfile
-    import os
-    from csv_to_bib import convert_csv_to_bib
-
     csv_path = args.output_csv or (
         args.output_bib.replace(".bib", ".csv")
         if args.output_bib
@@ -265,6 +335,12 @@ def handle_export(args):
             include_topics=args.include_topics,
             include_arxiv_id=args.include_arxiv_id,
         )
+        
+        # Cleanup temporary CSV if it was not requested by the user
+        if not args.output_csv and os.path.exists(csv_path):
+            logger.info(f"Cleaning up temporary file {csv_path}...")
+            os.remove(csv_path)
+            
         logger.info("Export and conversion completed successfully.")
 
     return 0
@@ -372,6 +448,16 @@ Examples:
     )
     parser_export.add_argument(
         "--verbose", "-v", action="store_true", help="Enable verbose output"
+    )
+    parser_export.add_argument(
+        "--input-dir",
+        type=str,
+        help="Input directory containing JSON files for batch export (e.g. Papers_By_Hot_Topic)",
+    )
+    parser_export.add_argument(
+        "--output-dir",
+        type=str,
+        help="Output directory for batch exported files",
     )
 
     args = parser.parse_args()

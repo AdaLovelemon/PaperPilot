@@ -86,6 +86,28 @@ uv run python main.py categorize --input papers.json --fill-abstracts --verbose
 **Output:**
 A directory `Papers_By_Hot_Topic/` will be created containing partitioned JSON files and a `HotTopic_Report.md` summarizing the distribution.
 
+### Phase 3: Export to CSV / BibTeX (`export`)
+
+Export papers from the database to CSV format and optionally convert them to a Zotero-importable BibTeX file.
+
+```bash
+# Export all papers to CSV and convert to BibTeX
+uv run python main.py export --output-csv all_papers.csv --output-bib all_papers.bib --include-abstract --dedupe
+
+# Export only specific conferences
+uv run python main.py export --conference CVPR,ICCV --output-bib cv_papers.bib
+```
+
+**Key Arguments:**
+- `--output-csv`: Output CSV file path.
+- `--output-bib`: Output BibTeX file path.
+- `--conference`: Comma-separated list of conferences to filter by.
+- `--dedupe`: Deduplicate BibTeX entries by arXiv ID or title+year.
+- `--include-abstract`: Include abstract in the BibTeX note field.
+- `--include-keywords`: Include keywords in the BibTeX note field.
+- `--include-topics`: Include topics in the BibTeX note field.
+- `--include-arxiv-id`: Include arXiv ID in the BibTeX note field.
+
 ## Customization
 
 ### Defining Your Topics (`config/topics.json`)

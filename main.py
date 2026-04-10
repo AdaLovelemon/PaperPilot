@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 Paper Collection System - Main Entry Point
 
@@ -20,20 +20,20 @@ import datetime
 
 # Fix encoding for Windows console
 if sys.platform == "win32":
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='ignore')
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="ignore")
 
 logger = logging.getLogger(__name__)
+
 
 def setup_logging(verbose: bool = False):
     """Setup logging configuration."""
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(
         level=level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            logging.StreamHandler(sys.stdout)
-        ]
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        handlers=[logging.StreamHandler(sys.stdout)],
     )
+
 
 def list_conferences():
     """List all available conferences from configuration."""
@@ -43,17 +43,17 @@ def list_conferences():
     print("\nAvailable conferences:")
     print("=" * 80)
     for conf in conferences:
-        name = conf.get('name', 'Unknown')
-        full_name = conf.get('full_name', '')
-        collector = conf.get('collector', 'unknown')
-        years = conf.get('years', [])
+        name = conf.get("name", "Unknown")
+        full_name = conf.get("full_name", "")
+        collector = conf.get("collector", "unknown")
+        years = conf.get("years", [])
 
         # 获取年份范围信息
-        year_range = conf.get('year_range', {})
+        year_range = conf.get("year_range", {})
         if year_range:
-            start_year = year_range.get('start', 2020)
-            end_year = year_range.get('end', 'current')
-            if end_year == 'current':
+            start_year = year_range.get("start", 2020)
+            end_year = year_range.get("end", "current")
+            if end_year == "current":
                 current_year = datetime.datetime.now().year
                 year_info = f"{start_year}年-当前 (自动扩展)"
             else:
@@ -70,6 +70,7 @@ def list_conferences():
         print(f"  {name:10} | {collector:15} | {full_name}")
         print(f"                可用年份: {year_info}")
         print()
+
 
 def find_available_year(conference_name: str, max_lookback: int = 5) -> tuple:
     """
@@ -112,6 +113,7 @@ def find_available_year(conference_name: str, max_lookback: int = 5) -> tuple:
     latest_configured = max([y for y in years if y <= current_year])
     return latest_configured, f"{start_year}年往前"
 
+
 def handle_collect(args):
     setup_logging(args.verbose)
 
@@ -129,20 +131,22 @@ def handle_collect(args):
         return 0
 
     if not args.conference:
-        logger.error("No conference specified. Use --list-conferences to see available options.")
+        logger.error(
+            "No conference specified. Use --list-conferences to see available options."
+        )
         return 1
 
-    if args.conference.upper() == 'ALL':
+    if args.conference.upper() == "ALL":
         config_loader = ConfigLoader()
         conferences = config_loader.load_conferences()
-        conference_names = [conf['name'] for conf in conferences]
+        conference_names = [conf["name"] for conf in conferences]
     else:
-        conference_names = [name.strip() for name in args.conference.split(',')]
+        conference_names = [name.strip() for name in args.conference.split(",")]
 
     years = []
     if args.year:
         try:
-            years = [int(y.strip()) for y in args.year.split(',')]
+            years = [int(y.strip()) for y in args.year.split(",")]
         except ValueError:
             logger.error("Invalid year format. Use comma-separated integers.")
             return 1
@@ -180,71 +184,195 @@ def handle_collect(args):
         total_papers += len(papers)
 
     print(f"\nTotal papers collected: {total_papers}")
-    
+
     if args.export_json:
         coordinator.export_results(output_path=args.export_json)
 
     return 0
 
+
 def handle_categorize(args):
     setup_logging(args.verbose)
-    
+
     logger.info(f"Loading papers from {args.input}")
     try:
-        with open(args.input, 'r', encoding='utf-8') as f:
+        with open(args.input, "r", encoding="utf-8") as f:
             papers = json.load(f)
     except Exception as e:
         logger.error(f"Failed to read input file {args.input}: {e}")
         return 1
-        
+
     categorizer = TopicCategorizer(topic_config_path=args.topic_config)
-    
+
     if not categorizer.topics:
         logger.error("No valid topics found in configuration. Aborting.")
         return 1
-        
+
     logger.info(f"Loaded {len(categorizer.topics)} topics from {args.topic_config}")
-    
+
     results = categorizer.categorize(papers, fill_missing_abstracts=args.fill_abstracts)
-    
+
     categorizer.export_results(results, output_dir=args.output_dir)
-    
+
     if args.fill_abstracts:
         try:
-            with open(args.input, 'w', encoding='utf-8') as f:
+            with open(args.input, "w", encoding="utf-8") as f:
                 json.dump(papers, f, ensure_ascii=False, indent=2)
             logger.info(f"Updated {args.input} with newly fetched abstracts.")
         except Exception as e:
             logger.error(f"Failed to write updated papers back to {args.input}: {e}")
-            
+
     return 0
+
+
+def handle_export(args):
+    setup_logging(args.verbose)
+
+    from storage.paper_storage import PaperStorage
+
+    storage = PaperStorage(db_path=args.db_path)
+
+    conferences = (
+        [c.strip() for c in args.conference.split(",")] if args.conference else None
+    )
+
+    # Generate temporary CSV path if user only asked for bib
+    import tempfile
+    import os
+    from csv_to_bib import convert_csv_to_bib
+
+    csv_path = args.output_csv or (
+        args.output_bib.replace(".bib", ".csv")
+        if args.output_bib
+        else "exported_papers.csv"
+    )
+
+    logger.info(f"Exporting papers from database to {csv_path}...")
+    num_exported = storage.export_to_csv(csv_path, conferences=conferences)
+
+    if num_exported == 0:
+        logger.warning("No papers found to export. Aborting BibTeX conversion.")
+        return 1
+
+    if args.output_bib:
+        logger.info(f"Converting {csv_path} to BibTeX format at {args.output_bib}...")
+        convert_csv_to_bib(
+            input_csv=csv_path,
+            output_bib=args.output_bib,
+            dedupe=args.dedupe,
+            include_abstract=args.include_abstract,
+            include_keywords=args.include_keywords,
+            include_topics=args.include_topics,
+            include_arxiv_id=args.include_arxiv_id,
+        )
+        logger.info("Export and conversion completed successfully.")
+
+    return 0
+
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Collect, match, and classify papers from top conferences.',
+        description="Collect, match, and classify papers from top conferences.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   uv run python main.py collect --conference CVPR --year 2024 --export-json papers.json
   uv run python main.py categorize --input papers.json --fill-abstracts
-        """
+  uv run python main.py export --output-csv all_papers.csv --output-bib all_papers.bib
+        """,
     )
-    subparsers = parser.add_subparsers(dest='command', help='Commands')
+    subparsers = parser.add_subparsers(dest="command", help="Commands")
 
-    parser_collect = subparsers.add_parser('collect', help='Collect papers from conference websites')
-    parser_collect.add_argument('--list-conferences', action='store_true', help='List all available conferences')
-    parser_collect.add_argument('--conference', '-c', type=str, default='', help='Conference name(s), comma-separated or "ALL"')
-    parser_collect.add_argument('--year', '-y', type=str, default='', help='Year(s), comma-separated')
-    parser_collect.add_argument('--export-json', type=str, metavar='FILE', help='Export all papers to JSON file')
-    parser_collect.add_argument('--verbose', '-v', action='store_true', help='Enable verbose output')
-    parser_collect.add_argument('--db-path', type=str, default='papers.db', help='Path to SQLite database file')
+    parser_collect = subparsers.add_parser(
+        "collect", help="Collect papers from conference websites"
+    )
+    parser_collect.add_argument(
+        "--list-conferences", action="store_true", help="List all available conferences"
+    )
+    parser_collect.add_argument(
+        "--conference",
+        "-c",
+        type=str,
+        default="",
+        help='Conference name(s), comma-separated or "ALL"',
+    )
+    parser_collect.add_argument(
+        "--year", "-y", type=str, default="", help="Year(s), comma-separated"
+    )
+    parser_collect.add_argument(
+        "--export-json", type=str, metavar="FILE", help="Export all papers to JSON file"
+    )
+    parser_collect.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
+    )
+    parser_collect.add_argument(
+        "--db-path", type=str, default="papers.db", help="Path to SQLite database file"
+    )
 
-    parser_categorize = subparsers.add_parser('categorize', help='Categorize existing JSON papers by abstract topics')
-    parser_categorize.add_argument('--input', '-i', type=str, required=True, help='Input JSON file containing papers (e.g. papers.json)')
-    parser_categorize.add_argument('--output-dir', '-o', type=str, default='Papers_By_Hot_Topic', help='Output directory to save categorized papers')
-    parser_categorize.add_argument('--topic-config', type=str, default='config/topics.json', help='Path to the topic mapping JSON file (keyword regex)')
-    parser_categorize.add_argument('--fill-abstracts', action='store_true', help='Automatically fetch missing abstracts from the original website (recommended)')
-    parser_categorize.add_argument('--verbose', '-v', action='store_true', help='Enable verbose output')
+    parser_categorize = subparsers.add_parser(
+        "categorize", help="Categorize existing JSON papers by abstract topics"
+    )
+    parser_categorize.add_argument(
+        "--input",
+        "-i",
+        type=str,
+        required=True,
+        help="Input JSON file containing papers (e.g. papers.json)",
+    )
+    parser_categorize.add_argument(
+        "--output-dir",
+        "-o",
+        type=str,
+        default="Papers_By_Hot_Topic",
+        help="Output directory to save categorized papers",
+    )
+    parser_categorize.add_argument(
+        "--topic-config",
+        type=str,
+        default="config/topics.json",
+        help="Path to the topic mapping JSON file (keyword regex)",
+    )
+    parser_categorize.add_argument(
+        "--fill-abstracts",
+        action="store_true",
+        help="Automatically fetch missing abstracts from the original website (recommended)",
+    )
+    parser_categorize.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
+    )
+
+    parser_export = subparsers.add_parser(
+        "export", help="Export papers from database to CSV and/or BibTeX"
+    )
+    parser_export.add_argument(
+        "--db-path", type=str, default="papers.db", help="Path to SQLite database file"
+    )
+    parser_export.add_argument(
+        "--conference",
+        "-c",
+        type=str,
+        help="Conference name(s) to filter by, comma-separated",
+    )
+    parser_export.add_argument("--output-csv", type=str, help="Output CSV file path")
+    parser_export.add_argument("--output-bib", type=str, help="Output BibTeX file path")
+    parser_export.add_argument(
+        "--dedupe", action="store_true", help="Deduplicate BibTeX entries"
+    )
+    parser_export.add_argument(
+        "--include-abstract", action="store_true", help="Include abstract in BibTeX"
+    )
+    parser_export.add_argument(
+        "--include-keywords", action="store_true", help="Include keywords in BibTeX"
+    )
+    parser_export.add_argument(
+        "--include-topics", action="store_true", help="Include topics in BibTeX"
+    )
+    parser_export.add_argument(
+        "--include-arxiv-id", action="store_true", help="Include arXiv ID in BibTeX"
+    )
+    parser_export.add_argument(
+        "--verbose", "-v", action="store_true", help="Enable verbose output"
+    )
 
     args = parser.parse_args()
 
@@ -252,12 +380,15 @@ Examples:
         parser.print_help()
         return 1
 
-    if args.command == 'collect':
+    if args.command == "collect":
         return handle_collect(args)
-    elif args.command == 'categorize':
+    elif args.command == "categorize":
         return handle_categorize(args)
+    elif args.command == "export":
+        return handle_export(args)
 
     return 0
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     sys.exit(main())

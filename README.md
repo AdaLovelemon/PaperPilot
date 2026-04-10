@@ -28,6 +28,7 @@ PaperPilot/
  config/              # User-editable configurations
     conferences.json # Target conference metadata
     topics.json      # Custom topic regex dictionary
+ csv_to_bib.py        # CSV to BibTeX conversion utility
  main.py              # Main CLI entry point
  pyproject.toml       # Project metadata
  README.md            # English Documentation

@@ -38,7 +38,8 @@ PaperPilot/
  config/              # 配置文件
     conferences.json # 官方顶会采集配置
     topics.json      # 领域热点(正则表达式)自定义分类词典
- main.py              # 主入口点 (集成了 collect 和 categorize 两大子命令)
+ csv_to_bib.py        # CSV 转 BibTeX 工具 (支持 Zotero 导入)
+ main.py              # 主入口点 (集成了 collect, categorize 和 export 子命令)
  pyproject.toml       # 项目配置
  README.md            # 英文文档
  README_CN.md         # 中文文档

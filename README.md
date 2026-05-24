@@ -1,132 +1,228 @@
-﻿# PaperPilot
+# PaperPilot
 
-[**中文版 (Chinese)**](./README_CN.md) | **English Version**
+[**中文版 (Chinese)**](./README_ZH.md) | **English Version**
 
-An automated scholarly paper collection and categorization system for top-tier computer science and robotics conferences (CVPR, ICCV, NeurIPS, ECCV, ICML, ICLR, ICRA, IROS, RSS, CoRL and more). It helps researchers keep up with the latest trends by automatically fetching paper metadata and categorizing them based on **Abstracts** using custom hot-topic definitions.
+Collect, enrich, categorize, and export papers from top AI/robotics conferences.
 
-## Key Features
+**Supported**: CVPR · ICCV · NeurIPS · ICLR · ICML · CoRL · RSS
 
-- **Dual-Engine Architecture**: Separates "Collection" (scraping) from "Categorization" (analysis), allowing you to re-categorize existing datasets anytime.
-- **Smart Abstract Completion**: Automatically visits source pages (e.g., CVF, OpenReview) to fetch missing abstracts if they aren't available in the initial metadata.
-- **Multi-Conference Support**: Pre-configured for over 10 flagship conferences.
-- **Regex-Based Topic Splitting**: Highly flexible categorization using `config/topics.json`. Define your own research interests (e.g., "Embodied AI", "LLMs", "Diffusion") and get organized folders and reports instantly.
-- **Robust Storage**: Supports JSON exports and SQLite database storage for full-text search.
-- **Scalable Collection**: Real-time batch saving (every 50 papers) to prevent data loss during long scraping sessions.
+Pure JSON storage — no database setup needed.
+
+---
+
+## Quick Start
+
+```bash
+# Install
+pip install requests beautifulsoup4
+
+# Collect CVPR 2024 papers (with arXiv enrichment for abstract/author completion)
+python main.py collect CVPR -y 2024
+
+# Collect NeurIPS 2024
+python main.py collect NeurIPS -y 2024
+
+# Export to BibTeX for Zotero
+python main.py export -i papers_NeurIPS_2024.json --output-bib neurips.bib --include-abstract
+```
+
+---
+
+## Examples
+
+### 1. Collect a single conference
+
+```bash
+python main.py collect CVPR -y 2024
+# → papers_CVPR_2024.json  (with abstracts, authors, PDF links)
+```
+
+### 2. Collect multiple years into separate files
+
+```bash
+python main.py collect NeurIPS -y 2023,2024
+# → papers_NeurIPS_2023.json
+# → papers_NeurIPS_2024.json
+```
+
+### 3. Collect multiple conferences, merge into one file
+
+```bash
+python main.py collect CVPR,ICCV -y 2023,2024 -o cv_papers.json
+# → cv_papers.json  (CVPR 2023 + CVPR 2024 + ICCV 2023 + ICCV 2024 merged)
+```
+
+### 4. Collect everything at once
+
+```bash
+python main.py collect ALL -y 2024
+# → papers_CVPR_2024.json, papers_ICCV_2024.json, ...
+```
+
+### 5. Quick sanity test (10 papers per conference)
+
+```bash
+python main.py collect ALL -y 2024 -n 10
+# Verifies all collectors work without waiting for full results
+```
+
+### 6. Full workflow: collect → categorize → export to BibTeX
+
+```bash
+# Step 1: Collect CVPR 2024
+python main.py collect CVPR -y 2024
+
+# Step 2: Categorize into research topics
+python main.py categorize -i papers_CVPR_2024.json
+# → Papers_By_Hot_Topic/01_Multimodal_LLM_VLM.json
+# → Papers_By_Hot_Topic/02_Embodied_AI_Robotics.json
+# → Papers_By_Hot_Topic/HotTopic_Report.md
+
+# Step 3: Batch export each topic to BibTeX (for Zotero import)
+python main.py export --input-dir Papers_By_Hot_Topic --output-dir Bibtex --include-abstract
+# → Bibtex/01_Multimodal_LLM_VLM.bib
+# → Bibtex/02_Embodied_AI_Robotics.bib
+```
+
+### 7. Debug a specific collector
+
+```bash
+python main.py collect RSS -y 2023 -n 3 -v
+# Verbose mode shows HTTP requests and parsing details
+```
+
+---
+
+## Commands
+
+### `list` — Show supported conferences
+
+```bash
+python main.py list
+```
+
+### `collect` — Fetch papers
+
+```bash
+python main.py collect [conferences...] [options]
+
+# conferences:  CVPR ICCV NeurIPS ICLR ICML CoRL RSS
+#               or ALL (everything)
+
+# Options:
+  -y, --year YEAR       Years, comma-separated  (default: current year)
+  -o, --output FILE     Merge all into one JSON file
+  -n, --max-papers N    Limit per conference/year  (test mode)
+  -v, --verbose         Show debug logs
+```
+
+### `categorize` — Group papers by research topic
+
+```bash
+python main.py categorize -i papers.json
+
+# Options:
+  -o, --output-dir DIR      Output directory  (default: Papers_By_Hot_Topic)
+  --topic-config FILE        Topic config path  (default: config/topics.json)
+```
+
+### `export` — Convert to CSV / BibTeX
+
+```bash
+python main.py export -i papers.json --output-bib papers.bib
+
+# Options:
+  --output-csv FILE         Export as CSV
+  --output-bib FILE         Export as BibTeX
+  --dedupe                  Remove duplicate entries
+  --include-abstract        Add abstract to BibTeX note field
+  --include-keywords        Add keywords to BibTeX note field
+  --include-topics          Add topic labels to BibTeX note field
+  --include-arxiv-id        Add arXiv ID to BibTeX note field
+
+# Batch: convert all JSONs in a directory
+python main.py export --input-dir Papers_By_Hot_Topic --output-dir Bibtex
+```
+
+---
+
+## Custom Topics
+
+Edit `config/topics.json` to define your own research areas. Each topic is a list of regex patterns matched against paper titles and abstracts:
+
+```json
+{
+  "01_Multimodal_LLM_VLM": [
+    "\\bllm\\b",
+    "vision-language model",
+    "visual language model",
+    "multimodal"
+  ],
+  "02_Embodied_AI_Robotics": [
+    "embodied",
+    "manipulation",
+    "locomotion",
+    "reinforcement learning"
+  ],
+  "03_Diffusion_Generation": [
+    "diffusion model",
+    "image generation",
+    "text-to-image",
+    "video generation"
+  ]
+}
+```
+
+After editing, re-run `categorize` to regroup your existing JSON files.
+
+---
 
 ## Project Structure
 
 ```
 PaperPilot/
- collectors/          # Conference-specific scrapers (CVF, OpenReview, PMLR, etc.)
- classifier/          # Legacy arXiv category classification
- matchers/            # Paper matching engines (e.g., linking to arXiv)
- storage/             # Data persistence (SQLite & JSON)
- utils/               # Configuration & common helpers
- core/                # Core orchestration logic
-    coordinator.py   # Collection workflow scheduler
-    categorizer.py   # Abstract-based topic analysis scheduler
- config/              # User-editable configurations
-    conferences.json # Target conference metadata
-    topics.json      # Custom topic regex dictionary
- csv_to_bib.py        # CSV to BibTeX conversion utility
- main.py              # Main CLI entry point
- pyproject.toml       # Project metadata
- README.md            # English Documentation
- README_CN.md         # Chinese Documentation
-```
-
-## Getting Started
-
-### Prerequisites
-
-- Python 3.8+
-- [uv](https://github.com/astral-sh/uv) (Highly Recommended) or pip
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/<your-username>/PaperPilot.git
-cd PaperPilot
-```
-
-2. Install dependencies:
-```bash
-uv sync
-```
-
-## Usage
-
-### Phase 1: Collect Papers (`collect`)
-
-Fetch paper listings from official websites or ArXiv.
-
-1. List supported conferences:
-```bash
-uv run python main.py collect --list-conferences
-```
-
-2. Collect a specific conference and year:
-```bash
-# Example: Collect CVPR 2025 papers
-uv run python main.py collect --conference CVPR --year 2025 --export-json papers.json --verbose
-```
-
-### Phase 2: Categorize by Hot Topics (`categorize`)
-
-Analyze the collected JSON and split papers into topic-specific folders based on their **Abstracts**.
-
-```bash
-uv run python main.py categorize --input papers.json --fill-abstracts --verbose
-```
-
-**Key Arguments:**
-- `--fill-abstracts`: Attempts to scrape missing abstracts from source HTML pages if not present in the local cache.
-- `--topic-config`: Path to your topic definitions (defaults to `config/topics.json`).
-
-**Output:**
-A directory `Papers_By_Hot_Topic/` will be created containing partitioned JSON files and a `HotTopic_Report.md` summarizing the distribution.
-
-### Phase 3: Export to CSV / BibTeX (`export`)
-
-Export papers from the database to CSV format and optionally convert them to a Zotero-importable BibTeX file. It also supports batch conversion of categorized JSON files.
-
-```bash
-# Mode A: Export all papers to CSV and convert to BibTeX
-uv run python main.py export --output-csv all_papers.csv --output-bib all_papers.bib --include-abstract --dedupe
-
-# Mode B: Export only specific conferences
-uv run python main.py export --conference CVPR,ICCV --output-bib cv_papers.bib
-
-# Mode C: Batch convert categorized JSONs to BibTeX (Recommended for Zotero Collections)
-uv run python main.py export --input-dir Papers_By_Hot_Topic --output-dir MyScholarBibs --include-abstract --dedupe
-```
-
-**Key Arguments:**
-- `--output-csv`: Output CSV file path.
-- `--output-bib`: Output BibTeX file path.
-- `--input-dir`: **(Batch Mode)** Directory containing JSON paper lists (e.g. `categorize` output).
-- `--output-dir`: **(Batch Mode)** Target directory for generated BibTeX files.
-- `--conference`: Comma-separated list of conferences to filter from database.
-- `--dedupe`: Deduplicate BibTeX entries by arXiv ID or title+year.
-- `--include-abstract`: Include abstract in the BibTeX note field.
-- `--include-keywords`: Include keywords in the BibTeX note field.
-- `--include-topics`: Include topics in the BibTeX note field.
-- `--include-arxiv-id`: Include arXiv ID in the BibTeX note field.
-
-## Customization
-
-### Defining Your Topics (`config/topics.json`)
-You can add your own research interests using regex patterns:
-
-```json
-{
-  "01_Multimodal_LLM_VLM": ["\\bllm\\b", "vision-language model"],
-  "02_Embodied_AI_Robotics": ["embodied", "manipulation", "locomotion"]
-}
+  main.py              # CLI: collect | categorize | export | list
+  collectors.py        # All conference scrapers
+  classifier.py        # Topic categorizer + keyword extraction
+  utils/
+    csv_to_bib.py      # CSV → BibTeX converter
+  config/
+    topics.json        # Custom topic regex patterns
 ```
 
 ---
 
+## How It Works
+
+1. **Collect** scrapes the conference proceedings page — typically one HTTP request per conference/year
+2. **Classify** extracts keywords and maps arXiv category codes to readable area names
+3. **Categorize** groups papers by regex topic patterns from `config/topics.json`
+4. **Export** converts to CSV or BibTeX for import into Zotero, JabRef, etc.
+
+All data is plain JSON — inspectable with any text editor or `jq`.
+
+---
+
+## Data Sources
+
+| Conference | Source | Type |
+|-----------|--------|------|
+| CVPR, ICCV | openaccess.thecvf.com | CVF HTML |
+| NeurIPS | papers.nips.cc | Listing page |
+| ICLR | api2.openreview.net | OpenReview v2 API |
+| ICML, CoRL | proceedings.mlr.press | PMLR HTML |
+| RSS | roboticsproceedings.org | Per-paper pages |
+
+---
+
+## Dependencies
+
+```bash
+pip install requests beautifulsoup4
+```
+
+Python 3.8+.
+
 ## License
-MIT License
+
+MIT License. See [LICENSE](./LICENSE) for details.

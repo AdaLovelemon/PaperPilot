@@ -60,3 +60,6 @@ MyScholarBibs/
 
 # uv
 uv.lock
+
+# claude code
+.claude/
